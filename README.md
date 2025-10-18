@@ -61,6 +61,110 @@ cd nommo-engine
 pip install -e .
 ```
 
+## Running the Local Environment
+
+### Activating the Virtual Environment
+
+The project uses a Python virtual environment for dependency isolation. You have two options:
+
+#### Option 1: Direct Virtual Environment Activation
+
+If you have a `venv/` directory in your project:
+
+```bash
+# On macOS/Linux
+source venv/bin/activate
+
+# On Windows
+venv\Scripts\activate
+```
+
+To deactivate when you're done:
+```bash
+deactivate
+```
+
+#### Option 2: Using Poetry (Recommended)
+
+Poetry automatically manages the virtual environment for you:
+
+```bash
+# Run a single command in the Poetry environment
+poetry run python example.py
+
+# Or activate a shell with the Poetry environment
+poetry shell
+
+# To exit the Poetry shell
+exit
+```
+
+### Running Python Scripts
+
+Once your environment is activated:
+
+```bash
+# Run the example script
+python example.py
+
+# Or with Poetry (no activation needed)
+poetry run python example.py
+```
+
+### Using the Nommo CLI
+
+The project includes a command-line interface:
+
+```bash
+# If environment is activated
+nommo --help
+
+# Using Poetry
+poetry run nommo --help
+```
+
+### Development Commands
+
+#### Running Tests
+```bash
+poetry run pytest
+# Or with coverage
+poetry run pytest --cov=nommo --cov-report=term-missing
+```
+
+#### Code Quality Checks
+```bash
+# Format code with Black
+poetry run black nommo/
+
+# Check code style with Ruff
+poetry run ruff check nommo/
+
+# Type checking with MyPy
+poetry run mypy nommo/
+```
+
+#### Documentation Server
+```bash
+poetry run mkdocs serve
+# Then visit http://127.0.0.1:8000
+```
+
+### Installing Additional Dependencies
+
+If you need to add new packages:
+
+```bash
+# Add a runtime dependency
+poetry add package-name
+
+# Add a development dependency
+poetry add --group dev package-name
+
+# Update all dependencies
+poetry update
+```
+
 ## Quick Start
 
 ### Create a Universe
