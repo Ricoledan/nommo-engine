@@ -1,0 +1,1 @@
+"""Plugin interface for extending Nommo Engine."""
