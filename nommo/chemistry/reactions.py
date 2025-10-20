@@ -21,7 +21,7 @@ from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -37,12 +37,13 @@ logger = get_logger("reactions")
 
 class ReactionType(Enum):
     """Types of chemical reactions."""
-    SYNTHESIS = "synthesis"        # A + B → AB
+
+    SYNTHESIS = "synthesis"  # A + B → AB
     DECOMPOSITION = "decomposition"  # AB → A + B
-    SUBSTITUTION = "substitution"   # AB + C → AC + B
-    CATALYSIS = "catalysis"        # A + B --C--> D + E (C unchanged)
+    SUBSTITUTION = "substitution"  # AB + C → AC + B
+    CATALYSIS = "catalysis"  # A + B --C--> D + E (C unchanged)
     POLYMERIZATION = "polymerization"  # nA → (A)n
-    REARRANGEMENT = "rearrangement"   # ABC → ACB
+    REARRANGEMENT = "rearrangement"  # ABC → ACB
 
 
 @dataclass
@@ -65,7 +66,7 @@ class ReactionRule:
     reactant_types: list[str]  # e.g., ["monomer_A", "monomer_B"]
 
     # Product specification
-    product_types: list[str]   # e.g., ["dimer_AB"]
+    product_types: list[str]  # e.g., ["dimer_AB"]
 
     # Optional fields with defaults
     min_reactants: int = 2
@@ -74,22 +75,22 @@ class ReactionRule:
 
     # Kinetics
     activation_energy: float = 10.0  # kJ/mol
-    pre_exponential: float = 1e12    # 1/ps
-    enthalpy_change: float = 0.0     # kJ/mol (negative = exothermic)
+    pre_exponential: float = 1e12  # 1/ps
+    enthalpy_change: float = 0.0  # kJ/mol (negative = exothermic)
 
     # Geometric constraints
-    max_distance: float = 0.3        # nm - maximum reactant separation
-    min_distance: float = 0.05       # nm - minimum reactant separation
+    max_distance: float = 0.3  # nm - maximum reactant separation
+    min_distance: float = 0.05  # nm - minimum reactant separation
 
     # Catalysis
     catalyst_types: list[str] = field(default_factory=list)
-    catalyst_distance: float = 0.5   # nm - catalyst interaction range
+    catalyst_distance: float = 0.5  # nm - catalyst interaction range
 
     # Conditional requirements
     requirements: dict[str, Any] = field(default_factory=dict)
 
     # Custom reaction function (for complex transformations)
-    custom_function: Optional[Callable] = None
+    custom_function: Callable | None = None
 
     def __post_init__(self):
         """Validate reaction rule parameters."""
@@ -139,9 +140,9 @@ class ReactionRule:
         if self.reaction_type == ReactionType.SYNTHESIS:
             delta_S = -0.05  # Loss of entropy when forming bonds
         elif self.reaction_type == ReactionType.DECOMPOSITION:
-            delta_S = 0.05   # Gain of entropy when breaking apart
+            delta_S = 0.05  # Gain of entropy when breaking apart
         else:
-            delta_S = 0.0   # Neutral for other types
+            delta_S = 0.0  # Neutral for other types
 
         # Calculate Gibbs free energy change
         delta_G = self.enthalpy_change - temperature * delta_S
@@ -157,8 +158,8 @@ class ReactionEvent:
     product_ids: list[str]
     catalyst_ids: list[str]
     energy_released: float  # kJ/mol
-    timestamp: int          # simulation tick
-    location: np.ndarray    # reaction center position
+    timestamp: int  # simulation tick
+    location: np.ndarray  # reaction center position
 
 
 class ReactionEngine:
@@ -214,7 +215,7 @@ class ReactionEngine:
         self.kinetics[rule.name] = ArrheniusKinetics(
             activation_energy=rule.activation_energy,
             pre_exponential=rule.pre_exponential,
-            steric_factor=0.1  # Account for orientation requirements
+            steric_factor=0.1,  # Account for orientation requirements
         )
 
         logger.debug(f"Added reaction rule: {rule.name}")
@@ -227,9 +228,7 @@ class ReactionEngine:
             logger.debug(f"Removed reaction rule: {rule_name}")
 
     def find_potential_reactions(
-        self,
-        particles: list["Particle"],
-        spatial_index=None
+        self, particles: list["Particle"], spatial_index=None
     ) -> list[dict[str, Any]]:
         """
         Find all potential reactions in the current system state.
@@ -251,21 +250,20 @@ class ReactionEngine:
             matches = self._find_rule_matches(rule, particles, particle_dict, spatial_index)
 
             for match in matches:
-                potential_reactions.append({
-                    "rule_name": rule_name,
-                    "rule": rule,
-                    "reactants": match["reactants"],
-                    "catalysts": match.get("catalysts", []),
-                    "center": match["center"]
-                })
+                potential_reactions.append(
+                    {
+                        "rule_name": rule_name,
+                        "rule": rule,
+                        "reactants": match["reactants"],
+                        "catalysts": match.get("catalysts", []),
+                        "center": match["center"],
+                    }
+                )
 
         return potential_reactions
 
     def execute_reactions(
-        self,
-        particles: list["Particle"],
-        timestep: float,
-        spatial_index=None
+        self, particles: list["Particle"], timestep: float, spatial_index=None
     ) -> dict[str, Any]:
         """
         Execute all feasible reactions in the system.
@@ -295,9 +293,7 @@ class ReactionEngine:
             # Check if reaction should occur
             if self._should_reaction_occur(rule, reactants, timestep):
                 # Execute the reaction
-                result = self._execute_single_reaction(
-                    rule, reactants, catalysts, particles
-                )
+                result = self._execute_single_reaction(rule, reactants, catalysts, particles)
 
                 if result["success"]:
                     reactions_executed += 1
@@ -307,9 +303,12 @@ class ReactionEngine:
 
                     # Record reaction event
                     self._record_reaction_event(
-                        rule.name, reactants, result["products"],
-                        catalysts, result["energy_released"],
-                        reaction_info["center"]
+                        rule.name,
+                        reactants,
+                        result["products"],
+                        catalysts,
+                        result["energy_released"],
+                        reaction_info["center"],
                     )
 
         # Update statistics
@@ -321,7 +320,7 @@ class ReactionEngine:
             "energy_released": energy_released,
             "particles_created": particles_created,
             "particles_destroyed": particles_destroyed,
-            "total_reactions": self.total_reactions
+            "total_reactions": self.total_reactions,
         }
 
     def get_statistics(self) -> dict[str, Any]:
@@ -334,7 +333,7 @@ class ReactionEngine:
                 self.energy_released_total / max(1, self.total_reactions)
             ),
             "active_rules": len(self.rules),
-            "recent_reactions": self.reaction_history[-10:]  # Last 10 reactions
+            "recent_reactions": self.reaction_history[-10:],  # Last 10 reactions
         }
 
     def _find_rule_matches(
@@ -342,7 +341,7 @@ class ReactionEngine:
         rule: ReactionRule,
         particles: list["Particle"],
         particle_dict: dict[str, "Particle"],
-        spatial_index=None
+        spatial_index=None,
     ) -> list[dict[str, Any]]:
         """Find all particle combinations that match a reaction rule."""
         matches = []
@@ -366,9 +365,7 @@ class ReactionEngine:
         return matches
 
     def _find_synthesis_matches(
-        self,
-        rule: ReactionRule,
-        particles_by_type: dict[str, list["Particle"]]
+        self, rule: ReactionRule, particles_by_type: dict[str, list["Particle"]]
     ) -> list[dict[str, Any]]:
         """Find particle pairs for synthesis reactions (A + B → AB)."""
         matches = []
@@ -387,21 +384,14 @@ class ReactionEngine:
                     continue
 
                 distance = p_a.distance_to(p_b)
-                if rule.min_distance <= distance <= rule.max_distance:
-                    # Check if particles can bond
-                    if p_a.can_bond_with(p_b):
-                        center = (p_a.position + p_b.position) / 2
-                        matches.append({
-                            "reactants": [p_a, p_b],
-                            "center": center
-                        })
+                if rule.min_distance <= distance <= rule.max_distance and p_a.can_bond_with(p_b):
+                    center = (p_a.position + p_b.position) / 2
+                    matches.append({"reactants": [p_a, p_b], "center": center})
 
         return matches
 
     def _find_decomposition_matches(
-        self,
-        rule: ReactionRule,
-        particles_by_type: dict[str, list["Particle"]]
+        self, rule: ReactionRule, particles_by_type: dict[str, list["Particle"]]
     ) -> list[dict[str, Any]]:
         """Find particles for decomposition reactions (AB → A + B)."""
         matches = []
@@ -415,17 +405,12 @@ class ReactionEngine:
         for particle in particles:
             # Check if particle has bonds that can be broken
             if len(particle.bonds) > 0:
-                matches.append({
-                    "reactants": [particle],
-                    "center": particle.position.copy()
-                })
+                matches.append({"reactants": [particle], "center": particle.position.copy()})
 
         return matches
 
     def _find_catalysis_matches(
-        self,
-        rule: ReactionRule,
-        particles_by_type: dict[str, list["Particle"]]
+        self, rule: ReactionRule, particles_by_type: dict[str, list["Particle"]]
     ) -> list[dict[str, Any]]:
         """Find reactant-catalyst combinations for catalytic reactions."""
         matches = []
@@ -439,7 +424,6 @@ class ReactionEngine:
             catalyst_particles.extend(particles_by_type.get(cat_type, []))
 
         for match in regular_matches:
-            reactants = match["reactants"]
             center = match["center"]
 
             # Find catalysts within range
@@ -456,9 +440,7 @@ class ReactionEngine:
         return matches
 
     def _find_generic_matches(
-        self,
-        rule: ReactionRule,
-        particles_by_type: dict[str, list["Particle"]]
+        self, rule: ReactionRule, particles_by_type: dict[str, list["Particle"]]
     ) -> list[dict[str, Any]]:
         """Generic matching for complex reaction types."""
         # This is a simplified implementation
@@ -466,10 +448,7 @@ class ReactionEngine:
         return []
 
     def _should_reaction_occur(
-        self,
-        rule: ReactionRule,
-        reactants: list["Particle"],
-        timestep: float
+        self, rule: ReactionRule, reactants: list["Particle"], timestep: float
     ) -> bool:
         """Determine if a reaction should occur based on kinetics."""
         # Check thermodynamic favorability
@@ -497,7 +476,7 @@ class ReactionEngine:
         rule: ReactionRule,
         reactants: list["Particle"],
         catalysts: list["Particle"],
-        all_particles: list["Particle"]
+        all_particles: list["Particle"],
     ) -> dict[str, Any]:
         """Execute a single reaction and return results."""
         try:
@@ -524,10 +503,7 @@ class ReactionEngine:
             return {"success": False, "error": str(e)}
 
     def _default_reaction_execution(
-        self,
-        rule: ReactionRule,
-        reactants: list["Particle"],
-        catalysts: list["Particle"]
+        self, rule: ReactionRule, reactants: list["Particle"], catalysts: list["Particle"]
     ) -> dict[str, Any]:
         """Default reaction execution logic."""
         products = []
@@ -538,24 +514,17 @@ class ReactionEngine:
                 product = self._create_synthesis_product(rule, reactants)
                 products.append(product)
 
-        elif rule.reaction_type == ReactionType.DECOMPOSITION:
+        elif rule.reaction_type == ReactionType.DECOMPOSITION and len(reactants) == 1:
             # Break apart reactant into multiple products
-            if len(reactants) == 1:
-                decomp_products = self._create_decomposition_products(rule, reactants[0])
-                products.extend(decomp_products)
+            decomp_products = self._create_decomposition_products(rule, reactants[0])
+            products.extend(decomp_products)
 
         energy_released = -rule.enthalpy_change  # Negative enthalpy = energy released
 
-        return {
-            "success": True,
-            "products": products,
-            "energy_released": energy_released
-        }
+        return {"success": True, "products": products, "energy_released": energy_released}
 
     def _create_synthesis_product(
-        self,
-        rule: ReactionRule,
-        reactants: list["Particle"]
+        self, rule: ReactionRule, reactants: list["Particle"]
     ) -> "Particle":
         """Create a new particle from synthesis reaction."""
         from nommo.core.particle import Particle
@@ -571,15 +540,13 @@ class ReactionEngine:
             position=center_of_mass,
             velocity=total_momentum / total_mass,
             particle_type=rule.product_types[0] if rule.product_types else "product",
-            generation=max(r.generation for r in reactants) + 1
+            generation=max(r.generation for r in reactants) + 1,
         )
 
         return product
 
     def _create_decomposition_products(
-        self,
-        rule: ReactionRule,
-        reactant: "Particle"
+        self, rule: ReactionRule, reactant: "Particle"
     ) -> list["Particle"]:
         """Create multiple particles from decomposition reaction."""
         from nommo.core.particle import Particle
@@ -593,7 +560,7 @@ class ReactionEngine:
         # Distribute mass and momentum
         mass_per_product = reactant.mass / num_products
 
-        for i, product_type in enumerate(rule.product_types):
+        for product_type in rule.product_types:
             # Slightly offset positions to avoid overlap
             offset = np.random.normal(0, 0.1, 3)  # Small random displacement
 
@@ -606,7 +573,7 @@ class ReactionEngine:
                 velocity=velocity,
                 particle_type=product_type,
                 generation=reactant.generation + 1,
-                parent_id=reactant.id
+                parent_id=reactant.id,
             )
 
             products.append(product)
@@ -620,7 +587,7 @@ class ReactionEngine:
         products: list["Particle"],
         catalysts: list["Particle"],
         energy_released: float,
-        center: np.ndarray
+        center: np.ndarray,
     ):
         """Record a reaction event for analysis."""
         event = ReactionEvent(
@@ -630,7 +597,7 @@ class ReactionEngine:
             catalyst_ids=[c.id for c in catalysts],
             energy_released=energy_released,
             timestamp=0,  # Would need simulation time
-            location=center
+            location=center,
         )
 
         self.reaction_history.append(event)

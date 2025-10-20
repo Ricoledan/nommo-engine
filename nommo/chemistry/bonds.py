@@ -13,7 +13,7 @@ References:
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -40,11 +40,11 @@ class Bond:
     particle2_id: str
     bond_energy: float  # kJ/mol - positive for stable bonds
     bond_length: float  # nm - equilibrium distance
-    age: int = 0       # simulation ticks since formation
+    age: int = 0  # simulation ticks since formation
     bond_type: str = "single"  # single, double, triple, etc.
 
     # Dynamic properties
-    current_length: Optional[float] = None  # current distance
+    current_length: float | None = None  # current distance
     strain_energy: float = 0.0  # excess energy due to stretching/compression
 
     def __post_init__(self):
@@ -92,7 +92,9 @@ class Bond:
         return self.bond_energy + self.strain_energy
 
     def __str__(self) -> str:
-        return f"Bond({self.particle1_id[:8]}↔{self.particle2_id[:8]}, {self.bond_energy:.1f} kJ/mol)"
+        return (
+            f"Bond({self.particle1_id[:8]}↔{self.particle2_id[:8]}, {self.bond_energy:.1f} kJ/mol)"
+        )
 
 
 class BondManager:
@@ -120,11 +122,11 @@ class BondManager:
 
     def __init__(
         self,
-        bond_energy: float = 20.0,        # kJ/mol
-        activation_energy: float = 10.0,   # kJ/mol
-        bonding_distance: float = 0.3,     # nm
-        breaking_threshold: float = 2.0,   # multiple of bond length
-        thermal_breaking_rate: float = 1e-6  # base probability per timestep
+        bond_energy: float = 20.0,  # kJ/mol
+        activation_energy: float = 10.0,  # kJ/mol
+        bonding_distance: float = 0.3,  # nm
+        breaking_threshold: float = 2.0,  # multiple of bond length
+        thermal_breaking_rate: float = 1e-6,  # base probability per timestep
     ):
         """
         Initialize bond manager.
@@ -149,22 +151,19 @@ class BondManager:
         self.formation_kinetics = ArrheniusKinetics(
             activation_energy=activation_energy,
             pre_exponential=1e12,  # Typical for bond formation
-            steric_factor=0.1      # Account for orientation requirements
+            steric_factor=0.1,  # Account for orientation requirements
         )
 
         # Track all bonds in the system
         self.bonds: dict[str, Bond] = {}  # bond_id -> Bond
         self.particle_bonds: dict[str, set[str]] = {}  # particle_id -> set of bond_ids
 
-        logger.debug(f"Initialized BondManager: E_bond={bond_energy} kJ/mol, "
-                    f"E_act={activation_energy} kJ/mol, d_bond={bonding_distance} nm")
+        logger.debug(
+            f"Initialized BondManager: E_bond={bond_energy} kJ/mol, "
+            f"E_act={activation_energy} kJ/mol, d_bond={bonding_distance} nm"
+        )
 
-    def can_form_bond(
-        self,
-        p1: "Particle",
-        p2: "Particle",
-        temperature: float
-    ) -> bool:
+    def can_form_bond(self, p1: "Particle", p2: "Particle", temperature: float) -> bool:
         """
         Check if two particles can form a bond.
 
@@ -198,12 +197,8 @@ class BondManager:
         return self._is_thermodynamically_favorable(p1, p2, temperature)
 
     def attempt_bond_formation(
-        self,
-        p1: "Particle",
-        p2: "Particle",
-        temperature: float,
-        timestep: float
-    ) -> Optional[Bond]:
+        self, p1: "Particle", p2: "Particle", temperature: float, timestep: float
+    ) -> Bond | None:
         """
         Attempt to form a bond between two particles.
 
@@ -250,11 +245,7 @@ class BondManager:
         return bond
 
     def should_break_bond(
-        self,
-        bond: Bond,
-        p1: "Particle",
-        p2: "Particle",
-        temperature: float
+        self, bond: Bond, p1: "Particle", p2: "Particle", temperature: float
     ) -> bool:
         """
         Determine if a bond should break.
@@ -274,8 +265,10 @@ class BondManager:
 
         # Check mechanical breaking (overstretching)
         if bond.is_overstretched(self.breaking_threshold):
-            logger.debug(f"Bond breaking due to overstretching: {distance:.3f} nm > "
-                        f"{self.breaking_threshold * bond.bond_length:.3f} nm")
+            logger.debug(
+                f"Bond breaking due to overstretching: {distance:.3f} nm > "
+                f"{self.breaking_threshold * bond.bond_length:.3f} nm"
+            )
             return True
 
         # Check energetic breaking (high-energy collision)
@@ -322,10 +315,7 @@ class BondManager:
         return True
 
     def update_bonds(
-        self,
-        particles: list["Particle"],
-        temperature: float,
-        timestep: float
+        self, particles: list["Particle"], temperature: float, timestep: float
     ) -> dict[str, int]:
         """
         Update all bonds in the system.
@@ -370,7 +360,7 @@ class BondManager:
         return {
             "bonds_formed": bonds_formed,
             "bonds_broken": bonds_broken,
-            "total_bonds": len(self.bonds)
+            "total_bonds": len(self.bonds),
         }
 
     def get_bond_network(self) -> dict[str, list[str]]:
@@ -418,7 +408,7 @@ class BondManager:
             particle2_id=p2.id,
             bond_energy=bond_energy,
             bond_length=distance * 0.9,  # Slightly shorter than formation distance
-            bond_type="single"
+            bond_type="single",
         )
 
     def _calculate_bond_energy(self, p1: "Particle", p2: "Particle") -> float:
@@ -427,12 +417,7 @@ class BondManager:
         energy = self.bond_energy
 
         # Modify based on particle types
-        type_factors = {
-            "monomer_A": 1.0,
-            "monomer_B": 1.2,
-            "catalyst": 0.8,
-            "default": 1.0
-        }
+        type_factors = {"monomer_A": 1.0, "monomer_B": 1.2, "catalyst": 0.8, "default": 1.0}
 
         factor1 = type_factors.get(p1.particle_type, 1.0)
         factor2 = type_factors.get(p2.particle_type, 1.0)
@@ -441,10 +426,7 @@ class BondManager:
         return energy * np.sqrt(factor1 * factor2)
 
     def _is_thermodynamically_favorable(
-        self,
-        p1: "Particle",
-        p2: "Particle",
-        temperature: float
+        self, p1: "Particle", p2: "Particle", temperature: float
     ) -> bool:
         """
         Check if bond formation is thermodynamically favorable.
@@ -465,11 +447,7 @@ class BondManager:
         return delta_G < 0
 
     def _has_breaking_collision(
-        self,
-        bond: Bond,
-        p1: "Particle",
-        p2: "Particle",
-        temperature: float
+        self, bond: Bond, p1: "Particle", p2: "Particle", temperature: float
     ) -> bool:
         """Check if collision has enough energy to break bond."""
         # Relative kinetic energy

@@ -29,6 +29,7 @@ MIN_DISTANCE = 0.01
 EPSILON_WATER = 1.0
 SIGMA_WATER = 0.316
 
+
 def temperature_to_energy(temperature: float) -> float:
     """Convert temperature (K) to thermal energy (kJ/mol)."""
     return KB_KJMOL_K * temperature
@@ -42,12 +43,12 @@ def energy_to_temperature(energy: float) -> float:
 def velocity_from_temperature(temperature: float, mass: float) -> float:
     """
     Calculate RMS velocity from temperature.
-    
+
     Args:
         temperature: Temperature in K
         mass: Mass in amu
-        
+
     Returns:
         RMS velocity in nm/ps
     """
-    return np.sqrt(3 * KB_KJMOL_K * temperature / (mass * ENERGY_CONVERSION))
+    return float(np.sqrt(3 * KB_KJMOL_K * temperature / (mass * ENERGY_CONVERSION)))

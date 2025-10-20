@@ -34,17 +34,22 @@ logger = get_logger("thermodynamics")
 class EnergyFlow:
     """Track energy flow in the system."""
 
-    kinetic_energy: float = 0.0      # kJ/mol
-    potential_energy: float = 0.0    # kJ/mol
-    bond_energy: float = 0.0         # kJ/mol
-    reaction_energy: float = 0.0     # kJ/mol released from reactions
-    input_energy: float = 0.0        # kJ/mol added externally
+    kinetic_energy: float = 0.0  # kJ/mol
+    potential_energy: float = 0.0  # kJ/mol
+    bond_energy: float = 0.0  # kJ/mol
+    reaction_energy: float = 0.0  # kJ/mol released from reactions
+    input_energy: float = 0.0  # kJ/mol added externally
 
     @property
     def total_energy(self) -> float:
         """Total energy in the system."""
-        return (self.kinetic_energy + self.potential_energy +
-                self.bond_energy + self.reaction_energy + self.input_energy)
+        return (
+            self.kinetic_energy
+            + self.potential_energy
+            + self.bond_energy
+            + self.reaction_energy
+            + self.input_energy
+        )
 
     def to_dict(self) -> dict[str, float]:
         """Convert to dictionary for analysis."""
@@ -54,7 +59,7 @@ class EnergyFlow:
             "bond": self.bond_energy,
             "reaction": self.reaction_energy,
             "input": self.input_energy,
-            "total": self.total_energy
+            "total": self.total_energy,
         }
 
 
@@ -66,7 +71,7 @@ class NetworkCluster:
     bonds: list["Bond"]
     size: int
     complexity: float  # Measure of structural complexity
-    is_cyclic: bool    # Contains cycles
+    is_cyclic: bool  # Contains cycles
 
     @property
     def bond_count(self) -> int:
@@ -113,10 +118,7 @@ class ThermodynamicsCalculator:
         logger.debug(f"Initialized ThermodynamicsCalculator at T={temperature} K")
 
     def calculate_energy_flow(
-        self,
-        particles: list["Particle"],
-        bonds: list["Bond"],
-        reaction_energy: float = 0.0
+        self, particles: list["Particle"], bonds: list["Bond"], reaction_energy: float = 0.0
     ) -> EnergyFlow:
         """
         Calculate comprehensive energy flow in the system.
@@ -154,9 +156,7 @@ class ThermodynamicsCalculator:
         return flow
 
     def analyze_bond_network(
-        self,
-        particles: list["Particle"],
-        bonds: list["Bond"]
+        self, particles: list["Particle"], bonds: list["Bond"]
     ) -> dict[str, any]:
         """
         Analyze the bond network structure.
@@ -189,14 +189,11 @@ class ThermodynamicsCalculator:
             "network_metrics": metrics,
             "autocatalytic_sets": autocatalytic_sets,
             "replicators": replicators,
-            "complexity_score": self._calculate_complexity_score(clusters)
+            "complexity_score": self._calculate_complexity_score(clusters),
         }
 
     def detect_emergence_signatures(
-        self,
-        network_analysis: dict[str, any],
-        energy_flow: EnergyFlow,
-        history_window: int = 100
+        self, network_analysis: dict[str, any], energy_flow: EnergyFlow, history_window: int = 100
     ) -> dict[str, any]:
         """
         Detect signatures of emergent behavior.
@@ -238,7 +235,7 @@ class ThermodynamicsCalculator:
         total_pe = 0.0
 
         for i, p1 in enumerate(particles):
-            for p2 in particles[i+1:]:
+            for p2 in particles[i + 1 :]:
                 distance = p1.distance_to(p2)
                 if distance < 1.0:  # Within interaction range
                     # Simple Lennard-Jones-like potential
@@ -252,11 +249,7 @@ class ThermodynamicsCalculator:
 
         return total_pe
 
-    def _build_bond_graph(
-        self,
-        particles: list["Particle"],
-        bonds: list["Bond"]
-    ) -> nx.Graph:
+    def _build_bond_graph(self, particles: list["Particle"], bonds: list["Bond"]) -> nx.Graph:
         """Build NetworkX graph from particles and bonds."""
         graph = nx.Graph()
 
@@ -268,19 +261,12 @@ class ThermodynamicsCalculator:
         for bond in bonds:
             if bond.particle1_id in graph.nodes and bond.particle2_id in graph.nodes:
                 graph.add_edge(
-                    bond.particle1_id,
-                    bond.particle2_id,
-                    bond=bond,
-                    weight=bond.bond_energy
+                    bond.particle1_id, bond.particle2_id, bond=bond, weight=bond.bond_energy
                 )
 
         return graph
 
-    def _find_clusters(
-        self,
-        graph: nx.Graph,
-        bonds: list["Bond"]
-    ) -> list[NetworkCluster]:
+    def _find_clusters(self, graph: nx.Graph, bonds: list["Bond"]) -> list[NetworkCluster]:
         """Find connected components (molecular clusters)."""
         clusters = []
 
@@ -304,7 +290,7 @@ class ThermodynamicsCalculator:
                 bonds=cluster_bonds,
                 size=len(component),
                 complexity=complexity,
-                is_cyclic=is_cyclic
+                is_cyclic=is_cyclic,
             )
 
             clusters.append(cluster)
@@ -312,9 +298,7 @@ class ThermodynamicsCalculator:
         return sorted(clusters, key=lambda c: c.size, reverse=True)
 
     def _calculate_network_metrics(
-        self,
-        graph: nx.Graph,
-        clusters: list[NetworkCluster]
+        self, graph: nx.Graph, clusters: list[NetworkCluster]
     ) -> dict[str, float]:
         """Calculate network-level metrics."""
         metrics = {}
@@ -372,17 +356,15 @@ class ThermodynamicsCalculator:
 
         # Combine into single complexity score
         complexity = (
-            0.4 * edge_density +
-            0.3 * clustering +
-            0.3 * min(1.0, avg_degree / 4.0)  # Normalize by typical max degree
+            0.4 * edge_density
+            + 0.3 * clustering
+            + 0.3 * min(1.0, avg_degree / 4.0)  # Normalize by typical max degree
         )
 
         return complexity
 
     def _detect_autocatalytic_sets(
-        self,
-        clusters: list[NetworkCluster],
-        bonds: list["Bond"]
+        self, clusters: list[NetworkCluster], bonds: list["Bond"]
     ) -> list[dict[str, any]]:
         """
         Detect autocatalytic sets in the molecular network.
@@ -394,25 +376,23 @@ class ThermodynamicsCalculator:
         autocatalytic_sets = []
 
         for cluster in clusters:
-            if cluster.size >= 3 and cluster.is_cyclic:
+            if cluster.size >= 3 and cluster.is_cyclic and cluster.complexity > 0.3:
                 # Simple heuristic: cyclic structures with sufficient complexity
-                # may represent autocatalytic behavior
-
-                if cluster.complexity > 0.3:  # Threshold for complexity
-                    autocatalytic_sets.append({
+                # may represent autocatalytic behavior (threshold for complexity)
+                autocatalytic_sets.append(
+                    {
                         "particle_ids": list(cluster.particle_ids),
                         "size": cluster.size,
                         "complexity": cluster.complexity,
                         "bond_count": cluster.bond_count,
-                        "type": "cyclic_complex"
-                    })
+                        "type": "cyclic_complex",
+                    }
+                )
 
         return autocatalytic_sets
 
     def _detect_replicators(
-        self,
-        particles: list["Particle"],
-        clusters: list[NetworkCluster]
+        self, particles: list["Particle"], clusters: list[NetworkCluster]
     ) -> list[dict[str, any]]:
         """Detect self-replicating structures."""
         replicators = []
@@ -434,16 +414,17 @@ class ThermodynamicsCalculator:
 
                 # Look for parents with multiple offspring
                 for parent_id, offspring in by_parent.items():
-                    if len(offspring) >= 2:
+                    if len(offspring) >= 2 and self._are_structurally_similar(offspring):
                         # Check if offspring are structurally similar
-                        if self._are_structurally_similar(offspring):
-                            replicators.append({
+                        replicators.append(
+                            {
                                 "parent_id": parent_id,
                                 "offspring_ids": [p.id for p in offspring],
                                 "generation": gen,
                                 "offspring_count": len(offspring),
-                                "type": "generational_replicator"
-                            })
+                                "type": "generational_replicator",
+                            }
+                        )
 
         return replicators
 
@@ -493,13 +474,17 @@ class ThermodynamicsCalculator:
         # Simple linear trend
         time_points = np.arange(len(total_energies))
 
-        total_trend = np.polyfit(time_points, total_energies, 1)[0] if len(total_energies) > 1 else 0.0
-        reaction_trend = np.polyfit(time_points, reaction_energies, 1)[0] if len(reaction_energies) > 1 else 0.0
+        total_trend = (
+            np.polyfit(time_points, total_energies, 1)[0] if len(total_energies) > 1 else 0.0
+        )
+        reaction_trend = (
+            np.polyfit(time_points, reaction_energies, 1)[0] if len(reaction_energies) > 1 else 0.0
+        )
 
         return {
             "total_energy_trend": total_trend,
             "reaction_energy_trend": reaction_trend,
-            "energy_volatility": np.std(total_energies) if total_energies else 0.0
+            "energy_volatility": np.std(total_energies) if total_energies else 0.0,
         }
 
     def _calculate_energy_efficiency(self, history: list[EnergyFlow]) -> float:

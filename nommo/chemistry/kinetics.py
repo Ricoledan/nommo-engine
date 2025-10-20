@@ -44,10 +44,7 @@ class ArrheniusKinetics:
     R = 0.008314  # Gas constant in kJ/(mol·K)
 
     def __init__(
-        self,
-        activation_energy: float,
-        pre_exponential: float = 1e13,
-        steric_factor: float = 1.0
+        self, activation_energy: float, pre_exponential: float = 1e13, steric_factor: float = 1.0
     ):
         """
         Initialize Arrhenius kinetics calculator.
@@ -69,8 +66,10 @@ class ArrheniusKinetics:
         if not 0 <= self.steric_factor <= 1:
             raise ValueError("Steric factor must be between 0 and 1")
 
-        logger.debug(f"Initialized Arrhenius kinetics: E_a={self.E_a:.2f} kJ/mol, "
-                    f"A={self.A:.2e} 1/ps, steric={self.steric_factor:.3f}")
+        logger.debug(
+            f"Initialized Arrhenius kinetics: E_a={self.E_a:.2f} kJ/mol, "
+            f"A={self.A:.2e} 1/ps, steric={self.steric_factor:.3f}"
+        )
 
     def rate_constant(self, temperature: float) -> float:
         """
@@ -119,10 +118,7 @@ class ArrheniusKinetics:
             return 1 - np.exp(-rate_arg)
 
     def has_sufficient_energy(
-        self,
-        particle1: "Particle",
-        particle2: "Particle",
-        temperature: float
+        self, particle1: "Particle", particle2: "Particle", temperature: float
     ) -> bool:
         """
         Determine if a collision has sufficient energy for reaction.
@@ -143,9 +139,7 @@ class ArrheniusKinetics:
         v_rel_magnitude = np.linalg.norm(v_rel)
 
         # Calculate reduced mass (effective mass for collision)
-        m_reduced = (particle1.mass * particle2.mass) / (
-            particle1.mass + particle2.mass
-        )
+        m_reduced = (particle1.mass * particle2.mass) / (particle1.mass + particle2.mass)
 
         # Kinetic energy of relative motion in simulation units
         E_rel_sim = 0.5 * m_reduced * v_rel_magnitude**2
@@ -169,10 +163,7 @@ class ArrheniusKinetics:
         return np.random.random() < boltzmann_prob
 
     def collision_frequency(
-        self,
-        particle1: "Particle",
-        particle2: "Particle",
-        temperature: float
+        self, particle1: "Particle", particle2: "Particle", temperature: float
     ) -> float:
         """
         Calculate collision frequency between two particles.
@@ -191,7 +182,7 @@ class ArrheniusKinetics:
             Collision frequency in 1/ps
         """
         # Collision cross-section (geometric)
-        sigma = np.pi * (particle1.radius + particle2.radius)**2
+        sigma = np.pi * (particle1.radius + particle2.radius) ** 2
 
         # Relative velocity magnitude
         v_rel = np.linalg.norm(particle1.velocity - particle2.velocity)
@@ -203,10 +194,7 @@ class ArrheniusKinetics:
         return frequency
 
     def effective_rate_constant(
-        self,
-        particle1: "Particle",
-        particle2: "Particle",
-        temperature: float
+        self, particle1: "Particle", particle2: "Particle", temperature: float
     ) -> float:
         """
         Calculate effective rate constant for specific particle pair.
@@ -233,8 +221,9 @@ class ArrheniusKinetics:
         else:
             # Reduced rate for insufficient energy
             v_rel_mag = np.linalg.norm(particle1.velocity - particle2.velocity)
-            thermal_velocity = np.sqrt(8 * self.R * temperature / np.pi /
-                                     ((particle1.mass + particle2.mass) / 2))
+            thermal_velocity = np.sqrt(
+                8 * self.R * temperature / np.pi / ((particle1.mass + particle2.mass) / 2)
+            )
             energy_factor = min(1.0, v_rel_mag / thermal_velocity)
 
         return base_rate * freq_factor * energy_factor
@@ -255,7 +244,7 @@ class ArrheniusKinetics:
         k_t_plus_10 = self.rate_constant(temperature + 10)
 
         if k_t == 0:
-            return float('inf') if k_t_plus_10 > 0 else 1.0
+            return float("inf") if k_t_plus_10 > 0 else 1.0
 
         return k_t_plus_10 / k_t
 
@@ -284,5 +273,7 @@ class ArrheniusKinetics:
         return inv_temps, np.array(ln_rates)
 
     def __repr__(self) -> str:
-        return (f"ArrheniusKinetics(E_a={self.E_a:.2f} kJ/mol, "
-                f"A={self.A:.2e} 1/ps, steric={self.steric_factor:.3f})")
+        return (
+            f"ArrheniusKinetics(E_a={self.E_a:.2f} kJ/mol, "
+            f"A={self.A:.2e} 1/ps, steric={self.steric_factor:.3f})"
+        )

@@ -1,6 +1,6 @@
 """Preset universe configurations."""
 
-from nommo.core.types import UniverseParameters, ParticleTypeConfig
+from nommo.core.types import ParticleTypeConfig, UniverseParameters
 
 
 def get_preset(name: str) -> UniverseParameters:
@@ -20,32 +20,20 @@ def earth_like_preset() -> UniverseParameters:
         description="Earth-like temperature and pressure conditions",
         particle_types={
             "monomer_A": ParticleTypeConfig(
-                name="monomer_A",
-                mass=50.0,
-                radius=0.2,
-                max_bonds=2,
-                color="#FF6B6B"
+                name="monomer_A", mass=50.0, radius=0.2, max_bonds=2, color="#FF6B6B"
             ),
             "monomer_B": ParticleTypeConfig(
-                name="monomer_B",
-                mass=75.0,
-                radius=0.25,
-                max_bonds=3,
-                color="#4ECDC4"
+                name="monomer_B", mass=75.0, radius=0.25, max_bonds=3, color="#4ECDC4"
             ),
             "catalyst": ParticleTypeConfig(
-                name="catalyst",
-                mass=100.0,
-                radius=0.3,
-                max_bonds=4,
-                color="#95E77E"
+                name="catalyst", mass=100.0, radius=0.3, max_bonds=4, color="#95E77E"
             ),
         },
         initial_composition={
             "monomer_A": 200,
             "monomer_B": 200,
             "catalyst": 50,
-        }
+        },
     )
 
 
@@ -66,14 +54,9 @@ def minimal_preset() -> UniverseParameters:
         name="minimal",
         description="Minimal configuration for testing",
         particle_types={
-            "particle": ParticleTypeConfig(
-                name="particle",
-                mass=50.0,
-                radius=0.2,
-                max_bonds=2
-            ),
+            "particle": ParticleTypeConfig(name="particle", mass=50.0, radius=0.2, max_bonds=2),
         },
         initial_composition={
             "particle": 100,
-        }
+        },
     )

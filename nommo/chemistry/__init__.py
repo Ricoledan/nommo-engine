@@ -22,5 +22,5 @@ __all__ = [
     "BondManager",
     "ReactionRule",
     "ReactionEngine",
-    "ThermodynamicsCalculator"
+    "ThermodynamicsCalculator",
 ]
